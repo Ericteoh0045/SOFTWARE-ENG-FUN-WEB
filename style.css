@@ -177,17 +177,16 @@ button:hover {
 .guest-login {
     text-align: center;
     margin-top: 10px;
+    font-size: 1rem;
 }
 
 .guest-login a {
-    color: rgb(125, 125, 235);
-    font-size: 1rem;
-    font-weight: bold;
-    cursor: pointer;
     text-decoration: none;
+    color: rgb(125, 125, 235);
+    font-weight: bold;
 }
 
 .guest-login a:hover {
-    text-decoration: underline;
     color: blue;
+    text-decoration: underline;
 }
