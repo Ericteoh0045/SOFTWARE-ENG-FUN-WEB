@@ -26,7 +26,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (user) {
             const userCollection = collection(db, "users", user.uid, "favoriteColors");
 
-            // Handle Save Color button click
+            // Handle Save Color button click for authenticated users
             saveColorButton.addEventListener("click", async () => {
                 const favoriteColor = favoriteColorInput.value.trim();
                 if (favoriteColor) {
@@ -45,8 +45,22 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
             });
         } else {
-            console.log("No user is currently logged in.");
-            window.location.href = "login.html";
+            // For guest users (not logged in)
+            // You can either display a message or allow them to input a color without saving it to Firestore
+            saveColorButton.addEventListener("click", () => {
+                const favoriteColor = favoriteColorInput.value.trim();
+                if (favoriteColor) {
+                    colorFeedback.innerText = `Color "${favoriteColor}" saved successfully for guest user!`;
+                    colorFeedback.style.color = "green";
+                } else {
+                    colorFeedback.innerText = "Please enter a valid color.";
+                    colorFeedback.style.color = "red";
+                }
+            });
+
+            // Display message indicating that the user is a guest
+            const guestMessage = document.getElementById('guestMessage');
+            guestMessage.textContent = "You are logged in as a Guest.";
         }
     });
 
