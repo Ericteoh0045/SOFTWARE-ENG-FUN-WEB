@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,9 +10,11 @@
             padding: 30px;
             background: linear-gradient(to right, #e2e2e2, #c9d6ff);
         }
+
         h1 {
             text-align: center;
         }
+
         button {
             color: blueviolet;
             background-color: #c9d6ff;
@@ -21,19 +24,25 @@
             font-weight: bold;
             border: none;
         }
+
         button:hover {
             text-decoration: underline;
             color: blue;
         }
-        button, div, input {
+
+        button,
+        div,
+        input {
             margin-left: 15%;
             font-size: 20px;
             padding: 10px;
         }
+
         div {
             font-weight: 400;
             color: rgb(12, 11, 11);
         }
+
         span {
             font-weight: 600;
             font-size: 22px;
@@ -42,6 +51,7 @@
     </style>
     <script type="module" src="homePerDashboard.js"></script>
 </head>
+
 <body>
     <h1>Welcome to the Personalized Dashboard</h1>
     <div>
@@ -49,6 +59,18 @@
         <button id="saveColor">Save Color</button>
     </div>
     <div id="colorFeedback"></div>
+    <p id="guestMessage"></p>
+    
+    <script>
+        // Check if the user is a guest
+        const user = localStorage.getItem('loggedInUserId') || 'guest'; // If there's no user in localStorage, treat as guest
+        const guestMessage = document.getElementById('guestMessage');
+
+        if (user === 'guest') {
+            guestMessage.textContent = "You are logged in as a Guest.";
+        }
+    </script>
     <button id="logout">Logout</button>
 </body>
+
 </html>
