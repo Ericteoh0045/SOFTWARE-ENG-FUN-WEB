@@ -56,7 +56,7 @@ document.addEventListener("DOMContentLoaded", () => {
         signOut(auth)
             .then(() => {
                 localStorage.removeItem("loggedInUserId");
-                window.location.href = "index.html";
+                window.location.href = "welcompage.html";
             })
             .catch((error) => {
                 console.error("Error signing out:", error);
