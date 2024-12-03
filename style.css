@@ -252,3 +252,20 @@ button:hover {
     opacity: 0;
     animation: fadeOut 7s forwards;
 }
+
+.guest-login {
+    text-align: center;
+    margin-top: 10px;
+    font-size: 1rem;
+}
+
+.guest-login a {
+    text-decoration: none;
+    color: rgb(125, 125, 235);
+    font-weight: bold;
+}
+
+.guest-login a:hover {
+    color: blue;
+    text-decoration: underline;
+}
