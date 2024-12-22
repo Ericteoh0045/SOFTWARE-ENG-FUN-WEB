@@ -1,100 +1,167 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Register & Login</title>
-    <link rel="icon" href="img/walletIcon.jpg">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet"> <!-- For Icons -->
-    <link rel="stylesheet" href="style.css">
-    <script type="module" src="firebaseauth.js"></script>
+    <title>Admin Dashboard</title>
+    <style>
+        /* Ensure the body and HTML take up full screen height */
+        html,
+        body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Full screen navbar */
+        .navbar {
+            background-color: #333;
+            color: white;
+            padding: 15px;
+            text-align: center;
+            font-size: 24px;
+            position: fixed;
+            width: 100%;
+            top: 0;
+            left: 0;
+        }
+
+        /* Main container for content below navbar */
+        .container {
+            max-width: 100%;
+            height: calc(100vh - 60px);
+            /* Subtract navbar height */
+            margin-top: 60px;
+            /* Make room for the fixed navbar */
+            padding: 20px;
+            background: white;
+            border-radius: 5px;
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+            overflow-y: auto;
+        }
+
+        /* Initially hidden categories section */
+        .hidden {
+            display: none;
+        }
+
+        #categoriesSection.hidden {
+            display: none !important;
+            /* 强制隐藏 */
+        }
+
+
+        /* Flex container for side-by-side sections */
+        .categories-wrapper {
+            display: flex;
+            gap: 20px;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            /* Make it responsive */
+        }
+
+        /* Section for expense and income categories */
+        .section {
+            flex: 1;
+            /* Sections take equal space */
+            min-width: 45%;
+            /* Ensure they don’t get too narrow */
+            margin-top: 20px;
+        }
+
+        /* Input field and button styling */
+        .form-group input {
+            padding: 10px;
+            font-size: 16px;
+            width: calc(100% - 140px);
+            margin-right: 10px;
+        }
+
+        .form-group button {
+            padding: 10px 20px;
+        }
+
+        #manageCategoriesBtn {
+            background-color: #007BFF;
+            /* 设置背景颜色 */
+            color: white;
+            /* 设置字体颜色 */
+            border: none;
+            /* 移除边框 */
+            border-radius: 5px;
+            /* 圆角样式 */
+            padding: 10px 30px;
+            /* 调整按钮大小 */
+            font-size: 16px;
+            /* 字体大小 */
+            cursor: pointer;
+            /* 鼠标悬停变成手指 */
+        }
+
+        #manageCategoriesBtn:hover {
+            background-color: #0056b3;
+            /* 鼠标悬停时的背景颜色 */
+        }
+
+        /* Category list styling */
+        ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        li {
+            margin: 10px 0;
+            padding: 10px;
+            background: #f8f9fa;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        li button {
+            margin-left: 10px;
+        }
+    </style>
 </head>
+
 <body>
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
-    
-    <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg">
-      <div class="container-fluid">
-        <!-- Brand with Image -->
-        <a class="navbar-brand d-flex align-items-center">
-          <img src="img/walletIcon.jpg" alt="Profile Picture" class="profile-pic">
-          Personal Budget Tracker
-        </a>
-        <!-- Toggler for mobile view -->
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-          <span class="navbar-toggler-icon"></span>
-        </button>
-        <!-- Navbar links -->
-        <div class="collapse navbar-collapse justify-content-end" id="navbarSupportedContent">
-          <ul class="navbar-nav mb-2 mb-lg-0">
-            <li class="nav-item">
-              <a class="nav-link active" href="welcompage.html"><i class="fas fa-home"></i> Home</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="#" onclick="showAbout()"><i class="fas fa-circle-question"></i> About</a>
-            </li>
-          </ul>
+    <div class="navbar">
+        Admin Dashboard
+    </div>
+    <div class="container">
+        <!-- Manage Categories Button -->
+        <button id="manageCategoriesBtn">Manage Categories</button>
+
+        <!-- Categories Management Section (Initially hidden) -->
+        <div id="categoriesSection" class="hidden categories-wrapper">
+            <!-- Expense Categories Section -->
+            <div class="section">
+                <h2>Manage Expense Categories</h2>
+                <div class="form-group">
+                    <input type="text" id="expenseCategoryInput" placeholder="Enter new expense category name">
+                    <button id="addExpenseCategoryBtn">Add Category</button>
+                </div>
+                <h3>Existing Expense Categories</h3>
+                <ul id="expenseCategoryList"></ul>
+            </div>
+
+            <!-- Income Categories Section -->
+            <div class="section">
+                <h2>Manage Income Categories</h2>
+                <div class="form-group">
+                    <input type="text" id="incomeCategoryInput" placeholder="Enter new income category name">
+                    <button id="addIncomeCategoryBtn">Add Category</button>
+                </div>
+                <h3>Existing Income Categories</h3>
+                <ul id="incomeCategoryList"></ul>
+            </div>
         </div>
-      </div>
-    </nav>
-    <div class="container" id="signup" style="display:none;">
-      <h1 class="form-title">Register</h1>
-      <form method="post" action="">
-        <div id="signUpMessage" class="messageDiv" style="display:none;"></div>
-        <div class="input-group">
-            <i class="fas fa-envelope"></i>
-            <input type="email"  id="rEmail" placeholder="Email" required>
-            <label for="rEmail">Email</label>
-        </div>
-        <div class="input-group">
-            <i class="fas fa-lock"></i>
-            <input type="password" id="rPassword"  placeholder="Password" required>
-            <label for="rPassword">Password</label>
-        </div>
-       <button class="btn" id="submitSignUp" >Sign Up</button>
-      </form>
-      <p class="or">
-        ----------or--------
-      </p>
-      <div class="links">
-        <p>Already Have Account ?</p>
-        <button id="signInButton">Sign In</button>
-      </div>
     </div>
 
-  <div class="container" id="signIn">
-        <h1 class="form-title">Sign In</h1>
-        <form method="post" action="">
-          <div id="signInMessage" class="messageDiv" style="display:none;"></div>
-
-          <div class="input-group">
-              <i class="fas fa-envelope"></i>
-              <input type="email"  id="email" placeholder="Email" required>
-              <label for="email">Email</label>
-          </div>
-          <div class="input-group">
-              <i class="fas fa-lock"></i>
-            <input type="password" id="password"  placeholder="Password" required>
-              <label for="password">Password</label>
-          </div>
-          <p class="recover">
-            <a href="#">Recover Password</a>
-          </p>
-         <button  class="btn"  id="submitSignIn">Sign In</button>
-        </form>
-        <p class="or">
-          ----------or--------
-        </p>
-        <div class="links">
-          <p>Don't have account yet?</p>
-          <button id="signUpButton">Sign Up</button>
-        </div>
-        <p class="guest-login">
-            <a href="homeGuestDashboard.html">Log In As Guest</a>
-        </p>
-      </div>
-      <script src="script.js"></script>
+    <script type="module" src="adminDashboard.js"></script>
 </body>
+
 </html>
