@@ -1,6 +1,7 @@
 // Import Firebase modules
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
 import { getFirestore, collection, addDoc, getDocs, updateDoc, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
 
 // Firebase configuration
 const firebaseConfig = {
@@ -16,6 +17,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
+
 // HTML Elements for Expense Categories
 const manageCategoriesBtn = document.getElementById('manageCategoriesBtn');
 const categoriesSection = document.getElementById('categoriesSection');
@@ -28,10 +30,26 @@ const incomeCategoryInput = document.getElementById('incomeCategoryInput');
 const addIncomeCategoryBtn = document.getElementById('addIncomeCategoryBtn');
 const incomeCategoryList = document.getElementById('incomeCategoryList');
 
-// Toggle Categories Section Visibility (Expense and Income Categories)
-manageCategoriesBtn.addEventListener('click', () => {
-    categoriesSection.classList.toggle('hidden'); // Show or hide both categories section
+// Sign Out Button
+const logoutBtn = document.getElementById('logout');
+
+logoutBtn.addEventListener('click', (e) => {
+    e.preventDefault(); // Prevent the default action of the link
+    window.location.href = 'welcompage.html'; // Redirect to the welcome page
 });
+
+// Toggle Categories Section Visibility
+manageCategoriesBtn.addEventListener('click', () => {
+    if (categoriesSection.classList.contains('hide')) {
+        categoriesSection.classList.remove('hide'); // Show the section
+    } else {
+        categoriesSection.classList.add('hide'); // Hide the section
+    }
+});
+
+
+
+
 
 // Fetch and Display Categories
 async function displayExpenseCategories() {
@@ -118,6 +136,18 @@ addIncomeCategoryBtn.addEventListener('click', async () => {
     }
 });
 
+logoutBtn.addEventListener('click', async (e) => {
+    e.preventDefault();
+    const auth = getAuth();
+    try {
+        await signOut(auth); // Sign out the user
+        window.location.href = 'welcompage.html'; // Redirect to the welcome page
+    } catch (error) {
+        console.error("Error signing out:", error);
+        alert("Failed to sign out. Try again.");
+    }
+});
+
 // Edit Expense Category
 async function editExpenseCategory(categoryId, currentName) {
     const newName = prompt('Edit expense category name:', currentName);
@@ -181,6 +211,7 @@ async function deleteIncomeCategory(categoryId) {
         }
     }
 }
+
 
 // Display categories on page load
 displayExpenseCategories();
