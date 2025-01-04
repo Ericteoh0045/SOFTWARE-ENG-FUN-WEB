@@ -106,8 +106,11 @@
                                     timestamp: new Date(expenseDate), // Store the date chosen by the user
                                 });
     
-                                // Update the total expense
-                                const totalDocRef = doc(db, 'users', user.uid, 'totals', 'expense');
+                                // Get the month and year for the total expense
+                                const monthYear = `${new Date(expenseDate).getMonth() + 1}-${new Date(expenseDate).getFullYear()}`;
+    
+                                // Reference to the document that stores the total expense for the month-year
+                                const totalDocRef = doc(db, 'users', user.uid, 'totals', `expense-${monthYear}`);
                                 const totalDocSnap = await getDoc(totalDocRef);
     
                                 let currentTotal = 0;
@@ -117,7 +120,7 @@
     
                                 const updatedTotal = currentTotal + amount;
     
-                                // Save the updated total to the database
+                                // Save the updated total to the database for that specific month-year
                                 await setDoc(totalDocRef, { total: updatedTotal });
     
                                 // Show the success modal

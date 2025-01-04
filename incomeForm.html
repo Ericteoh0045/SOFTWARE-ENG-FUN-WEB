@@ -106,8 +106,11 @@
                                     timestamp: new Date(incomeDate), // Store the date chosen by the user
                                 });
     
-                                // Update the total income
-                                const totalDocRef = doc(db, 'users', user.uid, 'totals', 'income');
+                                // Get the month and year for the total income
+                                const monthYear = `${new Date(incomeDate).getMonth() + 1}-${new Date(incomeDate).getFullYear()}`;
+
+                                // Reference to the document that stores the total income for the month-year
+                                const totalDocRef = doc(db, 'users', user.uid, 'totals', `income-${monthYear}`);
                                 const totalDocSnap = await getDoc(totalDocRef);
     
                                 let currentTotal = 0;
@@ -117,7 +120,7 @@
     
                                 const updatedTotal = currentTotal + amount;
     
-                                // Save the updated total to the database
+                                // Save the updated total to the database for that specific month-year
                                 await setDoc(totalDocRef, { total: updatedTotal });
     
                                 // Show the success modal
