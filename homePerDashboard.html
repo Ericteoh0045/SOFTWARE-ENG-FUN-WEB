@@ -39,7 +39,7 @@
 
         /* Adjustments to content below the navbar */
         body {
-            padding-top: 56px; /* Add padding to account for the fixed navbar height */
+            padding-top: 112px; /* Add padding to account for the two fixed navbars */
             background: linear-gradient(to right, #e2e2e2, #c9d6ff);
             margin: 0;
         }
@@ -66,12 +66,96 @@
             font-size: 22px;
             color: black;
         }
+
+        /* Styling for the second navbar */
+        .second-navbar {
+            position: fixed;
+            top: 56px; /* Position this just below the first navbar */
+            left: 0;
+            width: 100%;
+            background-color: #495057; /* Lighter gray */
+            z-index: 999;
+            padding: 8px 20px;
+            height: 56px;
+        }
+
+        .second-navbar .nav-link {
+            color: white;
+        }
+
+        .second-navbar .nav-link:hover {
+            color: #adb5bd;
+        }
+
+        /* Fixed Position Buttons for Income and Expense */
+        .vertical-buttons {
+            position: fixed;
+            right: 20px;
+            bottom: 20px;
+            z-index: 1001;
+        }
+
+        .vertical-buttons button {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 10px;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: none;
+            color: white;
+            font-size: 30px;
+            cursor: pointer;
+        }
+
+        .income-btn {
+            background-color: green;
+        }
+
+        .expense-btn {
+            background-color: red;
+        }
+
+        /* Dropdown styles for second navbar */
+        .dropdown-menu {
+            background-color: #495057;
+            border: none;
+        }
+
+        .custom-dropdown-position {
+        position: relative;  /* Allows positioning relative to its normal position */
+        top: -20px;          /* Moves the element 10px upwards */
+        left: -400px;         /* Moves the element 15px to the left */
+}
+
+
+        .dropdown-item {
+            color: white;
+        }
+
+        .dropdown-item:hover {
+            background-color: #6c757d;
+        }
+
+        /* Styling for the Total Income and Total Expenses text */
+        .total-income-expenses {
+            color: white;
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+
+        .custom-total-income-expenses {
+        position: relative;  /* Allows positioning relative to its normal position */
+        top: -85px;          /* Moves the text up by 10px */
+}
+
     </style>
     <script type="module" src="homePerDashboard.js"></script>
 </head>
 <body>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
-    
+
     <!-- Navbar -->
     <nav class="navbar navbar-expand-lg">
         <div class="container-fluid">
@@ -87,12 +171,6 @@
             <!-- Navbar links -->
             <div class="collapse navbar-collapse justify-content-end" id="navbarSupportedContent">
                 <ul class="navbar-nav mb-2 mb-lg-0">
-                    <li class="nav-item">
-                        <a class="nav-link active" href="#"><i class="fas fa-home"></i> Home</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="about.html" onclick="showAbout()"><i class="fas fa-circle-question"></i> About</a>
-                    </li>
                     <!-- Profile Icon and Text -->
                     <li class="nav-item">
                         <a class="nav-link" href="profile.html" onclick="showProfile()"><i class="fas fa-user"></i> Profile</a>
@@ -105,13 +183,45 @@
         </div>
     </nav>
 
-    
+    <!-- Second Navbar below the first one with Date Dropdown (Month & Year) and Total Income/Expenses Text -->
+    <nav class="second-navbar navbar-expand-lg">
+        <div class="container-fluid">
+            <!-- Date Dropdown (Month & Year) aligned to the left -->
+            <div class="dropdown custom-dropdown-position">
+                <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownDate" data-bs-toggle="dropdown" aria-expanded="false">
+                    Select Date
+                </button>
+                <ul class="dropdown-menu" aria-labelledby="dropdownDate">
+                    <li><a class="dropdown-item" href="#">January 2025</a></li>
+                    <li><a class="dropdown-item" href="#">February 2025</a></li>
+                    <li><a class="dropdown-item" href="#">March 2025</a></li>
+                </ul>
+            </div>
+
+            <!-- Total Income and Total Expenses aligned to the right -->
+            <div class="d-flex justify-content-end align-items-center custom-total-income-expenses">
+                <div class="total-income-expenses ms-3">Total Income: $2000</div>
+                <div class="total-income-expenses ms-3">Total Expenses: $1500</div>
+            </div>
+        </div>
+    </nav>
+
     <h1>Welcome to the Personalized Dashboard</h1>
-    <div>
+    <!-- <div>
         Enter your favorite color: <input type="text" id="favoriteColor" placeholder="Enter color">
         <button id="saveColor">Save Color</button>
     </div>
-    <div id="colorFeedback"></div>
-    <button id="logout">Logout</button>
+    <div id="colorFeedback"></div> -->
+
+    <!-- Vertical Buttons for Income and Expense -->
+    <div class="vertical-buttons">
+        <button class="income-btn" id="incomePopupBtn">+</button>
+        <button class="expense-btn" id="expensePopupBtn">-</button>
+    </div>
+
+    <!-- <button id="logout">Logout</button> -->
+
+    <!-- Link to external JavaScript file -->
+    <script src="homePerDashboard.js"></script>
 </body>
 </html>
