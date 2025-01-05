@@ -156,13 +156,13 @@ const fetchIncomeExpenseHistory = async (year, month, userId) => {
         // Build the history display
         let historyHTML = `<h4>Income & Expense History for ${month} ${year}</h4>`;
         historyHTML += `
-            <div class="history-item header">
-                <div class="history-field" style="font-weight: bold;">Type</div>
-                <div class="history-field" style="font-weight: bold;">Date</div>
-                <div class="history-field" style="font-weight: bold;">Amount</div>
-                <div class="history-field" style="font-weight: bold;">Category</div>
-                <div class="history-field" style="font-weight: bold;">Remark</div>
-            </div>`;
+        <div class="history-item header">
+            <div class="history-field" style="font-weight: bold;">Type</div>
+            <div class="history-field" style="font-weight: bold;">Date</div>
+            <div class="history-field" style="font-weight: bold;">Amount</div>
+            <div class="history-field" style="font-weight: bold;">Category</div>
+            <div class="history-field" style="font-weight: bold;">Remark</div>
+        </div>`;
 
         historyItems.forEach(item => {
             historyHTML += `
