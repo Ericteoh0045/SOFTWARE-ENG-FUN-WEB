@@ -49,6 +49,7 @@
             color: white !important;
         }
 
+        /* Vertical Buttons for Income and Expense */
         .vertical-buttons {
             position: fixed;
             right: 20px;
@@ -76,6 +77,88 @@
 
         .expense-btn {
             background-color: red;
+        }
+
+        /* Larger square buttons for history, chart, and budget */
+        .square-buttons {
+            position: fixed;
+            left: 20px;
+            bottom: 20px;
+            z-index: 1000;
+        }
+
+        .square-buttons button {
+            display: block;
+            width: 80px;
+            height: 80px;
+            margin-bottom: 10px;
+            border-radius: 10px;
+            font-size: 20px;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        .history-btn {
+            background-color: #007bff;
+        }
+
+        .history-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            overflow-y: auto; /* Allows vertical scrolling */
+            max-height: 400px; /* Can adjust as needed */
+        }
+
+        .history-items {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .history-item {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+
+        .history-field {
+            flex: 1;
+            padding: 5px;
+            text-align: center;
+        }
+
+
+
+
+        .chart-btn {
+            background-color: #28a745;
+        }
+
+        .budget-btn {
+            background-color: #ffc107;
+        }
+
+        /* Expandable content area for the buttons */
+        .expandable-content {
+            display: none;
+            position: fixed;
+            left: 110px;
+            bottom: 20px;
+            background-color: white;
+            border-radius: 10px;
+            width: 1250px;
+            height: 500px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+        }
+
+        .expandable-content.active {
+            display: block;
         }
     </style>
     <script type="module" src="homePerDashboard.js"></script>
@@ -109,7 +192,6 @@
                 </select>
             </div>
 
-
             <!-- Total Income -->
             <div class="summary-item">
                 <h5>Total Income</h5>
@@ -122,12 +204,24 @@
                 <span id="totalExpense">$0.00</span>
             </div>
         </div>
+    </div>
 
-        <!-- Vertical Buttons -->
-        <div class="vertical-buttons">
-            <button class="income-btn" id="incomePopupBtn">+</button>
-            <button class="expense-btn" id="expensePopupBtn">-</button>
-        </div>
+    <!-- Vertical Buttons for Income and Expense -->
+    <div class="vertical-buttons">
+        <button class="income-btn" id="incomePopupBtn">+</button>
+        <button class="expense-btn" id="expensePopupBtn">-</button>
+    </div>
+
+    <!-- Square Buttons for History, Chart, and Budget -->
+    <div class="square-buttons">
+        <button class="history-btn" id="historyBtn">History</button>
+        <button class="chart-btn" id="chartBtn">Chart</button>
+        <button class="budget-btn" id="budgetBtn">Budget</button>
+    </div>
+
+    <!-- Expandable content area for the buttons -->
+    <div id="expandableContent" class="expandable-content">
+        <!-- Content will expand here based on the button clicked -->
     </div>
 </body>
 </html>
