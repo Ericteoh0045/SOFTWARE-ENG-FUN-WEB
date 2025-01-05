@@ -1,6 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
-import { getFirestore, addDoc, collection } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+import { getFirestore, collection, query, where, getDocs, onSnapshot, doc } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
 
 // Firebase configuration
 const firebaseConfig = {
@@ -15,68 +15,122 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const auth = getAuth();
-const db = getFirestore();
+const db = getFirestore(app);
 
-// document.addEventListener("DOMContentLoaded", () => {
-//     const saveColorButton = document.getElementById("saveColor");
-//     const favoriteColorInput = document.getElementById("favoriteColor");
-//     const colorFeedback = document.getElementById("colorFeedback");
+// Populate dropdown with months and years
+const populateMonthYearDropdown = () => {
+    const dropdown = document.getElementById("monthYearDropdown");
+    const years = [2024, 2025];
+    const months = [
+        "January", "February", "March", "April", "May",
+        "June", "July", "August", "September", "October",
+        "November", "December"
+    ];
 
-//     // When user authentication state changes
-//     onAuthStateChanged(auth, (user) => {
-//         if (user) {
-//             const userCollection = collection(db, "users", user.uid, "favoriteColors");
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth() + 1;
 
-//             // Handle Save Color button click
-//             saveColorButton.addEventListener("click", async () => {
-//                 const favoriteColor = favoriteColorInput.value.trim();
-//                 if (favoriteColor) {
-//                     try {
-//                         await addDoc(userCollection, { color: favoriteColor, timestamp: new Date() });
-//                         colorFeedback.innerText = `Color "${favoriteColor}" saved successfully!`;
-//                         colorFeedback.style.color = "green";
-//                     } catch (error) {
-//                         console.error("Error saving color:", error);
-//                         colorFeedback.innerText = "Failed to save color.";
-//                         colorFeedback.style.color = "red";
-//                     }
-//                 } else {
-//                     colorFeedback.innerText = "Please enter a valid color.";
-//                     colorFeedback.style.color = "red";
-//                 }
-//             });
-//         } else {
-//             console.log("No user is currently logged in.");
-//             window.location.href = "login.html";
-//         }
-//     });
+    years.forEach((year) => {
+        months.forEach((month, index) => {
+            const option = document.createElement("option");
+            const monthValue = index + 1;
+            option.value = `${year}-${monthValue}`;
+            option.textContent = `${month} ${year}`;
+            if (year === currentYear && monthValue === currentMonth) {
+                option.selected = true;
+            }
+            dropdown.appendChild(option);
+        });
+    });
+};
 
-    // Logout functionality
-    const logoutButton = document.getElementById("logout");
-    logoutButton.addEventListener("click", () => {
-        signOut(auth)
-            .then(() => {
-                localStorage.removeItem("loggedInUserId");
-                window.location.href = "welcompage.html";
-            })
-            .catch((error) => {
-                console.error("Error signing out:", error);
+// Fetch and update monthly totals in real-time
+const fetchMonthlyTotals = async (userId, year, month) => {
+    const totalIncomeElement = document.getElementById("totalIncome");
+    const totalExpenseElement = document.getElementById("totalExpense");
+
+    let totalIncome = 0;
+    let totalExpense = 0;
+
+    const startOfMonth = new Date(year, month - 1, 1);
+    const endOfMonth = new Date(year, month, 0);
+
+    try {
+        // Income query with real-time updates using onSnapshot
+        const incomeQuery = query(
+            collection(db, "users", userId, "incomes"),
+            where("timestamp", ">=", startOfMonth),
+            where("timestamp", "<=", endOfMonth)
+        );
+
+        // Listen to income changes in real-time
+        onSnapshot(incomeQuery, (snapshot) => {
+            totalIncome = 0;
+            snapshot.forEach((doc) => {
+                const data = doc.data();
+                totalIncome += data.amount || 0;
             });
+            totalIncomeElement.textContent = `$${totalIncome.toFixed(2)}`;
+        });
+
+        // Expense query with real-time updates using onSnapshot
+        const expenseQuery = query(
+            collection(db, "users", userId, "expenses"),
+            where("timestamp", ">=", startOfMonth),
+            where("timestamp", "<=", endOfMonth)
+        );
+
+        // Listen to expense changes in real-time
+        onSnapshot(expenseQuery, (snapshot) => {
+            totalExpense = 0;
+            snapshot.forEach((doc) => {
+                const data = doc.data();
+                totalExpense += data.amount || 0;
+            });
+            totalExpenseElement.textContent = `$${totalExpense.toFixed(2)}`;
+        });
+    } catch (error) {
+        console.error("Error fetching totals:", error);
+    }
+};
+
+// Event listener for dropdown change
+const initializeAppListeners = (userId) => {
+    const dropdown = document.getElementById("monthYearDropdown");
+    const refreshTotals = () => {
+        const [year, month] = dropdown.value.split("-");
+        fetchMonthlyTotals(userId, parseInt(year, 10), parseInt(month, 10));
+    };
+
+    dropdown.addEventListener("change", refreshTotals);
+
+    document.getElementById("incomePopupBtn").addEventListener("click", () => {
+        window.open("incomeForm.html", "Income Entry", "width=400,height=400");
     });
 
-    // When the green '+' button is clicked, open a small pop-up window
-    const incomePopupBtn = document.getElementById('incomePopupBtn');
-    if (incomePopupBtn) {
-        incomePopupBtn.addEventListener('click', function() {
-            window.open('incomeForm.html', 'Income Entry', 'width=400,height=400');
-        });
-    }
+    document.getElementById("expensePopupBtn").addEventListener("click", () => {
+        window.open("expenseForm.html", "Expense Entry", "width=400,height=400");
+    });
 
-    // When the red '-' button is clicked, open a small pop-up window
-    const expensePopupBtn = document.getElementById('expensePopupBtn');
-    if (expensePopupBtn) {
-        expensePopupBtn.addEventListener('click', function() {
-            window.open('expenseForm.html', 'Expense Entry', 'width=400,height=400');
-        });
+    refreshTotals(); // Initial load for current month/year
+};
+
+// Monitor authentication state
+onAuthStateChanged(auth, (user) => {
+    if (user) {
+        populateMonthYearDropdown();
+        initializeAppListeners(user.uid);
+    } else {
+        window.location.href = "homePerDashboard.html";
     }
-// });
+});
+
+// Logout functionality
+document.getElementById("logout").addEventListener("click", () => {
+    signOut(auth)
+        .then(() => {
+            window.location.href = "welcompage.html";
+        })
+        .catch(console.error);
+});
