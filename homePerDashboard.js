@@ -118,7 +118,9 @@ const handleDelete = (id, type, userId) => {
     }
 };
 
-// Update the history items with the delete button event listener
+let unsubscribeIncome = null;
+let unsubscribeExpense = null;
+
 const fetchIncomeExpenseHistory = async (year, month, userId) => {
     const expandableContent = document.getElementById("expandableContent");
 
@@ -128,6 +130,10 @@ const fetchIncomeExpenseHistory = async (year, month, userId) => {
     let historyItems = [];
 
     try {
+        // Clean up old listeners if they exist
+        if (unsubscribeIncome) unsubscribeIncome();
+        if (unsubscribeExpense) unsubscribeExpense();
+
         // Income history query
         const incomeQuery = query(
             collection(db, "users", userId, "incomes"),
@@ -136,7 +142,7 @@ const fetchIncomeExpenseHistory = async (year, month, userId) => {
         );
 
         // Real-time updates for income history using onSnapshot
-        onSnapshot(incomeQuery, (incomeSnapshot) => {
+        unsubscribeIncome = onSnapshot(incomeQuery, (incomeSnapshot) => {
             historyItems = []; // Reset the history items before adding new ones
             incomeSnapshot.forEach((doc) => {
                 const data = doc.data();
@@ -162,7 +168,7 @@ const fetchIncomeExpenseHistory = async (year, month, userId) => {
             );
 
             // Real-time updates for expense history using onSnapshot
-            onSnapshot(expenseQuery, (expenseSnapshot) => {
+            unsubscribeExpense = onSnapshot(expenseQuery, (expenseSnapshot) => {
                 expenseSnapshot.forEach((doc) => {
                     const data = doc.data();
                     const expenseDate = new Date(data.timestamp.seconds * 1000);
@@ -233,7 +239,6 @@ const fetchIncomeExpenseHistory = async (year, month, userId) => {
         expandableContent.innerHTML = "<p>Failed to load income and expense history.</p>";
     }
 };
-
 
 
 
