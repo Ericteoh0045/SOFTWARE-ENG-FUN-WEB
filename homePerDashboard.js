@@ -121,6 +121,7 @@ const handleDelete = (id, type, userId) => {
 let unsubscribeIncome = null;
 let unsubscribeExpense = null;
 
+// Function to fetch and display history (income & expense)
 const fetchIncomeExpenseHistory = async (year, month, userId) => {
     const expandableContent = document.getElementById("expandableContent");
 
@@ -185,8 +186,8 @@ const fetchIncomeExpenseHistory = async (year, month, userId) => {
                     });
                 });
 
-                // Sort the items by date
-                historyItems.sort((a, b) => a.date - b.date);  // Ascending order of date
+                // Sort the items by date (ascending order)
+                historyItems.sort((a, b) => a.date - b.date);
 
                 // Build the history display
                 let historyHTML = `<h4>Income & Expense History for ${month} ${year}</h4>`;
@@ -240,8 +241,13 @@ const fetchIncomeExpenseHistory = async (year, month, userId) => {
     }
 };
 
+// Function to handle add or delete actions
+const handleAddOrDelete = () => {
+    const [year, month] = document.getElementById("monthYearDropdown").value.split("-");
+    fetchIncomeExpenseHistory(parseInt(year, 10), parseInt(month, 10), auth.currentUser.uid);  // Refresh history after action
+};
 
-// Event listener for dropdown change
+// Initialize the app with listeners
 const initializeAppListeners = (userId) => {
     const dropdown = document.getElementById("monthYearDropdown");
     const refreshTotals = () => {
@@ -252,11 +258,7 @@ const initializeAppListeners = (userId) => {
 
     dropdown.addEventListener("change", refreshTotals);
 
-    const handleAddOrDelete = () => {
-        const [year, month] = document.getElementById("monthYearDropdown").value.split("-");
-        fetchIncomeExpenseHistory(parseInt(year, 10), parseInt(month, 10), auth.currentUser.uid);  // Refresh history after action
-    };
-
+    // Listen for add actions (e.g., income/expense form submission)
     document.getElementById("incomePopupBtn").addEventListener("click", () => {
         window.open("incomeForm.html", "Income Entry", "width=400,height=400");
         handleAddOrDelete();
@@ -267,33 +269,8 @@ const initializeAppListeners = (userId) => {
         handleAddOrDelete();
     });
 
-    // Add event listeners for expanding buttons
-    document.getElementById("historyBtn").addEventListener("click", () => {
-        toggleExpand('historyExpand');
-    });
-
-    document.getElementById("chartBtn").addEventListener("click", () => {
-        toggleExpand('chartExpand');
-    });
-
-    document.getElementById("budgetBtn").addEventListener("click", () => {
-        toggleExpand('budgetExpand');
-    });
-
-    refreshTotals(); // Initial load for current month/year
-};
-
-
-// Toggle expansion of the square boxes
-const toggleExpand = (id) => {
-    const element = document.getElementById(id);
-    const allExpands = document.querySelectorAll('.expandable');
-    allExpands.forEach((expand) => {
-        if (expand !== element) {
-            expand.classList.remove('expanded');
-        }
-    });
-    element.classList.toggle('expanded');
+    // Initial load for current month/year
+    refreshTotals();
 };
 
 // Monitor authentication state
