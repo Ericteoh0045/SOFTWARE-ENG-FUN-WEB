@@ -200,7 +200,7 @@ const fetchIncomeExpenseHistory = async (year, month, userId) => {
                         <div class="history-field" style="font-weight: bold;">Actions</div>
                     </div>`;
 
-                // Update the history item with the edit button event listener
+                // Update the history item with the delete button event listener
                 historyItems.forEach(item => {
                     historyHTML += `
                         <div class="history-item">
@@ -241,7 +241,6 @@ const fetchIncomeExpenseHistory = async (year, month, userId) => {
 };
 
 
-
 // Event listener for dropdown change
 const initializeAppListeners = (userId) => {
     const dropdown = document.getElementById("monthYearDropdown");
@@ -253,12 +252,19 @@ const initializeAppListeners = (userId) => {
 
     dropdown.addEventListener("change", refreshTotals);
 
+    const handleAddOrDelete = () => {
+        const [year, month] = document.getElementById("monthYearDropdown").value.split("-");
+        fetchIncomeExpenseHistory(parseInt(year, 10), parseInt(month, 10), auth.currentUser.uid);  // Refresh history after action
+    };
+
     document.getElementById("incomePopupBtn").addEventListener("click", () => {
         window.open("incomeForm.html", "Income Entry", "width=400,height=400");
+        handleAddOrDelete();
     });
 
     document.getElementById("expensePopupBtn").addEventListener("click", () => {
         window.open("expenseForm.html", "Expense Entry", "width=400,height=400");
+        handleAddOrDelete();
     });
 
     // Add event listeners for expanding buttons
@@ -276,6 +282,7 @@ const initializeAppListeners = (userId) => {
 
     refreshTotals(); // Initial load for current month/year
 };
+
 
 // Toggle expansion of the square boxes
 const toggleExpand = (id) => {
@@ -329,4 +336,4 @@ function toggleExpandableContent(content) {
     // Show the content and update its text
     expandableContent.classList.toggle("active");
     expandableContent.innerHTML = `<h4>${content}</h4><p>Details and settings related to ${content} can go here.</p>`;
-};
+}
