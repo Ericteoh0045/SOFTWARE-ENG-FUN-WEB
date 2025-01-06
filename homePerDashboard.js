@@ -1,6 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
-import { getFirestore, collection, query, where, getDocs, onSnapshot } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+import { getFirestore, collection, query, where, getDocs, updateDoc, deleteDoc, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
 
 // Firebase configuration
 const firebaseConfig = {
@@ -95,6 +95,30 @@ const fetchMonthlyTotals = async (userId, year, month) => {
     }
 };
 
+// Function to handle delete icon click and deletion from Firestore
+const handleDelete = (id, type, userId) => {
+    // Show confirmation dialog
+    if (confirm("Are you sure you want to delete this entry?")) {
+        // Proceed with deleting the document from Firestore
+        const collectionPath = type === "Income" ? "incomes" : "expenses";
+        const docRef = doc(db, "users", userId, collectionPath, id);
+
+        // Delete the document from Firestore
+        deleteDoc(docRef)
+            .then(() => {
+                console.log(`${type} deleted successfully.`);
+                // Recalculate the total income/expense and update the history
+                const [year, month] = document.getElementById("monthYearDropdown").value.split("-");
+                fetchMonthlyTotals(userId, parseInt(year, 10), parseInt(month, 10)); // Update totals
+                fetchIncomeExpenseHistory(parseInt(year, 10), parseInt(month, 10), userId); // Update history
+            })
+            .catch((error) => {
+                console.error("Error deleting document: ", error);
+            });
+    }
+};
+
+// Update the history items with the delete button event listener
 const fetchIncomeExpenseHistory = async (year, month, userId) => {
     const expandableContent = document.getElementById("expandableContent");
 
@@ -111,80 +135,105 @@ const fetchIncomeExpenseHistory = async (year, month, userId) => {
             where("timestamp", "<=", endOfMonth)
         );
 
-        const incomeSnapshot = await getDocs(incomeQuery);
-        incomeSnapshot.forEach((doc) => {
-            const data = doc.data();
-            const incomeDate = new Date(data.timestamp.seconds * 1000);
-            const incomeAmount = data.amount || 0;
-            const incomeCategory = data.category || "N/A";
-            const incomeRemark = data.remarks || "N/A"; // Fetching remark
-            historyItems.push({
-                type: "Income",
-                date: incomeDate,
-                amount: incomeAmount,
-                category: incomeCategory,
-                remarks: incomeRemark // Adding remark to the history item
+        // Real-time updates for income history using onSnapshot
+        onSnapshot(incomeQuery, (incomeSnapshot) => {
+            historyItems = []; // Reset the history items before adding new ones
+            incomeSnapshot.forEach((doc) => {
+                const data = doc.data();
+                const incomeDate = new Date(data.timestamp.seconds * 1000);
+                const incomeAmount = data.amount || 0;
+                const incomeCategory = data.category || "N/A";
+                const incomeRemark = data.remarks || "N/A";
+                historyItems.push({
+                    type: "Income",
+                    id: doc.id,
+                    date: incomeDate,
+                    amount: incomeAmount,
+                    category: incomeCategory,
+                    remarks: incomeRemark
+                });
+            });
+
+            // Expense history query
+            const expenseQuery = query(
+                collection(db, "users", userId, "expenses"),
+                where("timestamp", ">=", startOfMonth),
+                where("timestamp", "<=", endOfMonth)
+            );
+
+            // Real-time updates for expense history using onSnapshot
+            onSnapshot(expenseQuery, (expenseSnapshot) => {
+                expenseSnapshot.forEach((doc) => {
+                    const data = doc.data();
+                    const expenseDate = new Date(data.timestamp.seconds * 1000);
+                    const expenseAmount = data.amount || 0;
+                    const expenseCategory = data.category || "N/A";
+                    const expenseRemark = data.remarks || "N/A";
+                    historyItems.push({
+                        type: "Expense",
+                        id: doc.id,
+                        date: expenseDate,
+                        amount: expenseAmount,
+                        category: expenseCategory,
+                        remarks: expenseRemark
+                    });
+                });
+
+                // Sort the items by date
+                historyItems.sort((a, b) => a.date - b.date);  // Ascending order of date
+
+                // Build the history display
+                let historyHTML = `<h4>Income & Expense History for ${month} ${year}</h4>`;
+                historyHTML += `
+                    <div class="history-item header">
+                        <div class="history-field" style="font-weight: bold;">Type</div>
+                        <div class="history-field" style="font-weight: bold;">Date</div>
+                        <div class="history-field" style="font-weight: bold;">Amount</div>
+                        <div class="history-field" style="font-weight: bold;">Category</div>
+                        <div class="history-field" style="font-weight: bold;">Remark</div>
+                        <div class="history-field" style="font-weight: bold;">Actions</div>
+                    </div>`;
+
+                // Update the history item with the edit button event listener
+                historyItems.forEach(item => {
+                    historyHTML += `
+                        <div class="history-item">
+                            <div class="history-field">${item.type}</div>
+                            <div class="history-field">${item.date.toLocaleDateString()}</div>
+                            <div class="history-field">$${item.amount.toFixed(2)}</div>
+                            <div class="history-field">${item.category}</div>
+                            <div class="history-field">${item.remarks}</div>
+                            <div class="history-field">
+                                <button class="delete-btn" data-id="${item.id}" data-type="${item.type}">
+                                    <i class="fas fa-trash-alt"></i> <!-- Delete icon -->
+                                </button>
+                            </div>
+                        </div>`;
+                });
+
+                expandableContent.innerHTML = `
+                    <div class="history-container">
+                        ${historyHTML}
+                    </div>
+                `;
+
+                // Add event listeners for the delete buttons
+                const deleteButtons = document.querySelectorAll('.delete-btn');
+                deleteButtons.forEach(button => {
+                    button.addEventListener('click', () => {
+                        const id = button.getAttribute('data-id');
+                        const type = button.getAttribute('data-type');
+                        handleDelete(id, type, userId);
+                    });
+                });
             });
         });
-
-        // Expense history query
-        const expenseQuery = query(
-            collection(db, "users", userId, "expenses"),
-            where("timestamp", ">=", startOfMonth),
-            where("timestamp", "<=", endOfMonth)
-        );
-
-        const expenseSnapshot = await getDocs(expenseQuery);
-        expenseSnapshot.forEach((doc) => {
-            const data = doc.data();
-            const expenseDate = new Date(data.timestamp.seconds * 1000);
-            const expenseAmount = data.amount || 0;
-            const expenseCategory = data.category || "N/A";
-            const expenseRemark = data.remarks || "N/A"; // Fetching remark
-            historyItems.push({
-                type: "Expense",
-                date: expenseDate,
-                amount: expenseAmount,
-                category: expenseCategory,
-                remarks: expenseRemark // Adding remark to the history item
-            });
-        });
-
-        // Sort the items by date
-        historyItems.sort((a, b) => a.date - b.date);  // Ascending order of date
-
-        // Build the history display
-        let historyHTML = `<h4>Income & Expense History for ${month} ${year}</h4>`;
-        historyHTML += `
-        <div class="history-item header">
-            <div class="history-field" style="font-weight: bold;">Type</div>
-            <div class="history-field" style="font-weight: bold;">Date</div>
-            <div class="history-field" style="font-weight: bold;">Amount</div>
-            <div class="history-field" style="font-weight: bold;">Category</div>
-            <div class="history-field" style="font-weight: bold;">Remark</div>
-        </div>`;
-
-        historyItems.forEach(item => {
-            historyHTML += `
-                <div class="history-item">
-                    <div class="history-field">${item.type}</div>
-                    <div class="history-field">${item.date.toLocaleDateString()}</div>
-                    <div class="history-field">$${item.amount.toFixed(2)}</div>
-                    <div class="history-field">${item.category}</div>
-                    <div class="history-field">${item.remarks}</div> <!-- Adding remark -->
-                </div>`;
-        });
-
-        expandableContent.innerHTML = `
-            <div class="history-container">
-                ${historyHTML}
-            </div>
-        `;
     } catch (error) {
         console.error("Error fetching history:", error);
         expandableContent.innerHTML = "<p>Failed to load income and expense history.</p>";
     }
 };
+
 
 
 

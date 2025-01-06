@@ -90,25 +90,28 @@
                         event.preventDefault();
     
                         const category = document.getElementById('categoryDropdown').value;
-                        const amount = parseFloat(document.getElementById('incomeAmount').value);
+                        let amount = parseFloat(document.getElementById('incomeAmount').value);
                         const remarks = document.getElementById('remarks').value.trim();
                         const incomeDate = document.getElementById('incomeDate').value || new Date().toISOString().split('T')[0]; // Default to today's date
     
                         if (category && amount > 0 && remarks) {
                             try {
+                                // Round the amount to 2 decimal places
+                                amount = amount.toFixed(2); // Ensures only 2 decimal places
+    
                                 const userIncomeCollection = collection(db, 'users', user.uid, 'incomes');
     
                                 // Save new income to the database
                                 await addDoc(userIncomeCollection, {
                                     category,
-                                    amount,
+                                    amount: parseFloat(amount), // Save the rounded value as a float
                                     remarks,
                                     timestamp: new Date(incomeDate), // Store the date chosen by the user
                                 });
     
                                 // Get the month and year for the total income
                                 const monthYear = `${new Date(incomeDate).getMonth() + 1}-${new Date(incomeDate).getFullYear()}`;
-
+    
                                 // Reference to the document that stores the total income for the month-year
                                 const totalDocRef = doc(db, 'users', user.uid, 'totals', `income-${monthYear}`);
                                 const totalDocSnap = await getDoc(totalDocRef);
@@ -118,7 +121,7 @@
                                     currentTotal = totalDocSnap.data().total || 0;
                                 }
     
-                                const updatedTotal = currentTotal + amount;
+                                const updatedTotal = currentTotal + parseFloat(amount); // Add to the total income
     
                                 // Save the updated total to the database for that specific month-year
                                 await setDoc(totalDocRef, { total: updatedTotal });
@@ -149,6 +152,17 @@
                 }
             });
         });
+    
+        // Restrict input to two decimal places while typing
+        document.getElementById('incomeAmount').addEventListener('input', function(e) {
+            let value = e.target.value;
+            if (value.includes('.')) {
+                const parts = value.split('.');
+                if (parts[1].length > 2) {
+                    e.target.value = `${parts[0]}.${parts[1].slice(0, 2)}`;
+                }
+            }
+        });
     </script>
 </head>
 <body>
@@ -165,7 +179,7 @@
         <!-- Input for Income Amount -->
         <div class="mb-3">
             <label for="incomeAmount" class="form-label">Income Amount</label>
-            <input type="number" class="form-control" id="incomeAmount" placeholder="Enter income amount" required>
+            <input type="number" class="form-control" id="incomeAmount" placeholder="Enter income amount" required step="0.01" min="0.01">
         </div>
 
         <!-- Input for Remarks -->
