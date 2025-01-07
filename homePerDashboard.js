@@ -1,6 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
-import { getFirestore, collection, query, where, getDocs, updateDoc, deleteDoc, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+import { getFirestore, collection, query, where, getDocs, updateDoc, deleteDoc, doc, onSnapshot,setDoc } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
 
 // Firebase configuration
 const firebaseConfig = {
@@ -45,26 +45,26 @@ const populateMonthYearDropdown = () => {
     });
 };
 
-// Fetch and update monthly totals in real-time
 const fetchMonthlyTotals = async (userId, year, month) => {
     const totalIncomeElement = document.getElementById("totalIncome");
     const totalExpenseElement = document.getElementById("totalExpense");
+    const totalBudgetElement = document.getElementById("totalBudget");
 
     let totalIncome = 0;
     let totalExpense = 0;
+    let totalBudget = 0;
 
     const startOfMonth = new Date(year, month - 1, 1);
     const endOfMonth = new Date(year, month, 0);
 
     try {
-        // Income query with real-time updates using onSnapshot
+        // Income query with real-time updates
         const incomeQuery = query(
             collection(db, "users", userId, "incomes"),
             where("timestamp", ">=", startOfMonth),
             where("timestamp", "<=", endOfMonth)
         );
 
-        // Listen to income changes in real-time
         onSnapshot(incomeQuery, (snapshot) => {
             totalIncome = 0;
             snapshot.forEach((doc) => {
@@ -72,16 +72,16 @@ const fetchMonthlyTotals = async (userId, year, month) => {
                 totalIncome += data.amount || 0;
             });
             totalIncomeElement.textContent = `$${totalIncome.toFixed(2)}`;
+            updateBudgetPieChart(totalBudget, totalIncome, totalExpense);
         });
 
-        // Expense query with real-time updates using onSnapshot
+        // Expense query with real-time updates
         const expenseQuery = query(
             collection(db, "users", userId, "expenses"),
             where("timestamp", ">=", startOfMonth),
             where("timestamp", "<=", endOfMonth)
         );
 
-        // Listen to expense changes in real-time
         onSnapshot(expenseQuery, (snapshot) => {
             totalExpense = 0;
             snapshot.forEach((doc) => {
@@ -89,11 +89,25 @@ const fetchMonthlyTotals = async (userId, year, month) => {
                 totalExpense += data.amount || 0;
             });
             totalExpenseElement.textContent = `$${totalExpense.toFixed(2)}`;
+            updateBudgetPieChart(totalBudget, totalIncome, totalExpense);
+        });
+
+        // Fetch budget in real-time
+        const budgetDocRef = doc(db, "users", userId, "budgets", `${year}-${month}`);
+        onSnapshot(budgetDocRef, (docSnapshot) => {
+            if (docSnapshot.exists()) {
+                totalBudget = docSnapshot.data().budget || 0;
+            } else {
+                totalBudget = 0;
+            }
+            totalBudgetElement.textContent = `$${totalBudget.toFixed(2)}`;
+            updateBudgetPieChart(totalBudget, totalIncome, totalExpense);
         });
     } catch (error) {
         console.error("Error fetching totals:", error);
     }
 };
+
 
 // Function to handle delete icon click and deletion from Firestore
 const handleDelete = (id, type, userId) => {
@@ -121,7 +135,6 @@ const handleDelete = (id, type, userId) => {
 let unsubscribeIncome = null;
 let unsubscribeExpense = null;
 
-// Function to fetch and display history (income & expense)
 const fetchIncomeExpenseHistory = async (year, month, userId) => {
     const expandableContent = document.getElementById("expandableContent");
 
@@ -186,8 +199,8 @@ const fetchIncomeExpenseHistory = async (year, month, userId) => {
                     });
                 });
 
-                // Sort the items by date (ascending order)
-                historyItems.sort((a, b) => a.date - b.date);
+                // Sort the items by date
+                historyItems.sort((a, b) => a.date - b.date);  // Ascending order of date
 
                 // Build the history display
                 let historyHTML = `<h4>Income & Expense History for ${month} ${year}</h4>`;
@@ -241,13 +254,8 @@ const fetchIncomeExpenseHistory = async (year, month, userId) => {
     }
 };
 
-// Function to handle add or delete actions
-const handleAddOrDelete = () => {
-    const [year, month] = document.getElementById("monthYearDropdown").value.split("-");
-    fetchIncomeExpenseHistory(parseInt(year, 10), parseInt(month, 10), auth.currentUser.uid);  // Refresh history after action
-};
 
-// Initialize the app with listeners
+// Event listener for dropdown change
 const initializeAppListeners = (userId) => {
     const dropdown = document.getElementById("monthYearDropdown");
     const refreshTotals = () => {
@@ -258,7 +266,11 @@ const initializeAppListeners = (userId) => {
 
     dropdown.addEventListener("change", refreshTotals);
 
-    // Listen for add actions (e.g., income/expense form submission)
+    const handleAddOrDelete = () => {
+        const [year, month] = document.getElementById("monthYearDropdown").value.split("-");
+        fetchIncomeExpenseHistory(parseInt(year, 10), parseInt(month, 10), auth.currentUser.uid);  // Refresh history after action
+    };
+
     document.getElementById("incomePopupBtn").addEventListener("click", () => {
         window.open("incomeForm.html", "Income Entry", "width=400,height=400");
         handleAddOrDelete();
@@ -269,8 +281,34 @@ const initializeAppListeners = (userId) => {
         handleAddOrDelete();
     });
 
-    // Initial load for current month/year
-    refreshTotals();
+    // Add event listeners for expanding buttons
+    document.getElementById("historyBtn").addEventListener("click", () => {
+        toggleExpand('historyExpand');
+    });
+
+    document.getElementById("chartBtn").addEventListener("click", () => {
+        toggleExpand('chartExpand');
+    });
+
+    document.getElementById("budgetBtn").addEventListener("click", () => {
+        toggleExpand('budgetExpand');
+    });
+
+    refreshTotals(); // Initial load for current month/year
+};
+
+
+
+// Toggle expansion of the square boxes
+const toggleExpand = (id) => {
+    const element = document.getElementById(id);
+    const allExpands = document.querySelectorAll('.expandable');
+    allExpands.forEach((expand) => {
+        if (expand !== element) {
+            expand.classList.remove('expanded');
+        }
+    });
+    element.classList.toggle('expanded');
 };
 
 // Monitor authentication state
@@ -310,7 +348,264 @@ document.getElementById("budgetBtn").addEventListener("click", () => {
 function toggleExpandableContent(content) {
     const expandableContent = document.getElementById("expandableContent");
 
-    // Show the content and update its text
     expandableContent.classList.toggle("active");
-    expandableContent.innerHTML = `<h4>${content}</h4><p>Details and settings related to ${content} can go here.</p>`;
+
+    if (!expandableContent.classList.contains("active")) {
+        expandableContent.innerHTML = "";
+        return;
+    }
+
+    if (content === "Chart Content") {
+        expandableContent.innerHTML = `
+            <h4>${content}</h4>
+            <div class="chart-buttons-container">
+                <button id="addButton" class="green-btn">+</button>
+                <button id="subtractButton" class="red-btn">-</button>
+            </div>
+            <div class="scrollable-container" id="chartContainer">
+                <canvas id="chartCanvas" width="800" height="400"></canvas>
+            </div>
+        `;
+
+        // Add event listeners after buttons are added to the DOM
+        document.getElementById("addButton").addEventListener("click", () => {
+            refreshChart("Income");
+        });
+
+        document.getElementById("subtractButton").addEventListener("click", () => {
+            refreshChart("Expense");
+        });
+
+        // Show the initial chart
+        refreshChart("Income");
+    } else {
+        expandableContent.innerHTML = `
+            <h4>${content}</h4>
+            <p>Details and settings related to ${content} can go here.</p>
+        `;
+    }
 }
+
+
+function refreshChart(type) {
+    const chartContainer = document.getElementById("chartContainer");
+
+    // Clear the previous chart
+    chartContainer.innerHTML = `
+        <canvas id="chartCanvas"></canvas>
+    `;
+
+    // Set the canvas dimensions to match the container
+    const canvas = document.getElementById("chartCanvas");
+    canvas.width = chartContainer.offsetWidth; // Match the container width
+    canvas.height = 300; // Fixed height for scrolling
+
+    // Fetch data and render the chart
+    showBarChart(type, auth.currentUser.uid);
+}
+
+
+
+async function showBarChart(type, userId) {
+    const [year, month] = document.getElementById("monthYearDropdown").value.split("-");
+    const startOfMonth = new Date(year, month - 1, 1);
+    const endOfMonth = new Date(year, month, 0);
+
+    const collectionPath = type === "Income" ? "incomes" : "expenses";
+
+    try {
+        const querySnapshot = await getDocs(
+            query(
+                collection(db, "users", userId, collectionPath),
+                where("timestamp", ">=", startOfMonth),
+                where("timestamp", "<=", endOfMonth)
+            )
+        );
+
+        const categoryTotals = {};
+        querySnapshot.forEach((doc) => {
+            const data = doc.data();
+            const category = data.category || "Other";
+            const amount = data.amount || 0;
+            categoryTotals[category] = (categoryTotals[category] || 0) + amount;
+        });
+
+        const categories = Object.keys(categoryTotals);
+        const amounts = Object.values(categoryTotals);
+
+        const ctx = document.getElementById("chartCanvas").getContext("2d");
+        new Chart(ctx, {
+            type: "bar",
+            data: {
+                labels: categories,
+                datasets: [{
+                    label: `${type} by Category`,
+                    data: amounts,
+                    backgroundColor: type === "Income" ? "rgba(75, 192, 192, 0.6)" : "rgba(255, 99, 132, 0.6)",
+                    borderColor: type === "Income" ? "rgba(75, 192, 192, 1)" : "rgba(255, 99, 132, 1)",
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false, // Allow the chart to resize freely
+                plugins: {
+                    legend: {
+                        position: "top"
+                    },
+                    title: {
+                        display: true,
+                        text: `${type} Distribution for ${month}/${year}`
+                    }
+                },
+                scales: {
+                    x: {
+                        beginAtZero: true
+                    },
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+    } catch (error) {
+        console.error(`Error fetching ${type} data for chart:`, error);
+    }
+}
+const updateBudgetPieChart = (budget, income, expense) => {
+    const remainingBudget = budget - expense;
+    const pieChartCanvas = document.getElementById("budgetPieChart");
+
+    if (!pieChartCanvas) {
+        console.error("Pie chart canvas not found!");
+        return;
+    }
+
+    const ctx = pieChartCanvas.getContext("2d");
+
+    // Alert if remaining budget is below 10%
+    if (budget > 0 && remainingBudget / budget <= 0.1) {
+        alert("Warning: Remaining budget is below 10%!");
+    }
+
+    // Destroy the existing chart if it exists
+    if (window.budgetChart) {
+        window.budgetChart.destroy();
+    }
+
+    // Create a new chart instance
+    window.budgetChart = new Chart(ctx, {
+        type: "pie",
+        data: {
+            labels: ["Income", "Expense", "Remaining Budget"],
+            datasets: [
+                {
+                    label: "Budget Distribution",
+                    data: [
+                        income,
+                        expense,
+                        remainingBudget > 0 ? remainingBudget : 0,
+                    ],
+                    backgroundColor: ["#4CAF50", "#F44336", "#FFEB3B"],
+                },
+            ],
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false, // Allow custom width/height
+            plugins: {
+                legend: {
+                    position: "top",
+                },
+            },
+        },
+    });
+};
+
+const loadBudgetContent = async () => {
+    const expandableContent = document.getElementById("expandableContent");
+
+    // Clear the existing content in the expandable area
+    expandableContent.innerHTML = "";
+
+    // Create the budget container dynamically
+    const budgetContainer = document.createElement("div");
+    budgetContainer.id = "budgetExpand";
+    budgetContainer.classList.add("expandable");
+
+    // Create the "Set Monthly Budget" button dynamically
+    const setBudgetBtn = document.createElement("button");
+    setBudgetBtn.id = "setBudgetBtn";
+    setBudgetBtn.classList.add("btn", "btn-warning");
+    setBudgetBtn.textContent = "Set Monthly Budget";
+
+    // Append the button to the budget container
+    budgetContainer.appendChild(setBudgetBtn);
+
+    // Check if the pie chart canvas already exists
+    let pieChartCanvas = document.getElementById("budgetPieChart");
+    if (pieChartCanvas) {
+        // If a canvas exists, clear its content to avoid conflicts
+        pieChartCanvas.remove();
+    }
+
+    // Create a new pie chart canvas
+    pieChartCanvas = document.createElement("canvas");
+    pieChartCanvas.id = "budgetPieChart";
+    pieChartCanvas.style.width = "380px";
+    pieChartCanvas.style.height = "380px";
+    pieChartCanvas.style.margin = "20px auto";
+    budgetContainer.appendChild(pieChartCanvas);
+
+    // Append the budget container to the expandable content area
+    expandableContent.appendChild(budgetContainer);
+
+    // Add event listener to the "Set Monthly Budget" button
+    setBudgetBtn.addEventListener("click", async () => {
+        const dropdown = document.getElementById("monthYearDropdown");
+        const [year, month] = dropdown.value.split("-");
+        const budgetAmount = parseFloat(
+            prompt(`Enter the budget for ${month}-${year}:`)
+        );
+
+        if (!isNaN(budgetAmount) && budgetAmount > 0) {
+            const userId = auth.currentUser.uid; // Get the current user's ID
+            await setMonthlyBudget(userId, parseInt(year, 10), parseInt(month, 10), budgetAmount);
+            fetchMonthlyTotals(userId, parseInt(year, 10), parseInt(month, 10)); // Refresh data
+        } else {
+            alert("Please enter a valid budget amount.");
+        }
+    });
+
+    // Fetch and update the chart with current budget data
+    const dropdown = document.getElementById("monthYearDropdown");
+    const [year, month] = dropdown.value.split("-");
+    const userId = auth.currentUser.uid;
+
+    await fetchMonthlyTotals(userId, parseInt(year, 10), parseInt(month, 10));
+};
+
+
+
+// Event listener for the "Budget" button
+document.getElementById("budgetBtn").addEventListener("click", loadBudgetContent);
+
+const setMonthlyBudget = async (userId, year, month, budgetAmount) => {
+    const budgetDocRef = doc(db, "users", userId, "budgets", `${year}-${month}`);
+    const maxRetries = 3;
+
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+            // Use setDoc to create or overwrite the budget document
+            await setDoc(budgetDocRef, { budget: budgetAmount });
+            alert(`Budget for ${month}-${year} successfully set to $${budgetAmount}`);
+            return;
+        } catch (error) {
+            console.error(`Attempt ${attempt} failed: ${error.message}`);
+            if (attempt === maxRetries) {
+                alert(`Failed to set the budget after ${maxRetries} attempts: ${error.message}`);
+            }
+        }
+    }
+};
+

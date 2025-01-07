@@ -180,8 +180,87 @@
             color: #ff4d4d; /* Delete icon hover color */
         }
 
+        .green-btn {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 290px;
+            margin: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+
+        .green-btn:hover {
+            background-color: #45a049;
+        }
+
+        .red-btn {
+            background-color: #f44336;
+            color: white;
+            border: none;
+            padding: 10px 290px;
+            margin: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+
+        .red-btn:hover {
+            background-color: #e53935;
+        }
+
+        .chart-buttons-container {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .scrollable-container {
+            max-height: 400px; /* Set maximum height */
+            overflow-y: auto; /* Enable vertical scrolling */
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+
+        #chartCanvas {
+            display: block; /* Ensures the chart is block-level for proper scrolling */
+            margin: 0 auto;
+        }
+
+        #logout {
+            cursor: pointer;
+        }
+
+        #budgetExpand {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            height: 400px; /* Set the height of the budget container */
+            overflow-y: auto; /* Enable vertical scrolling */
+            border: 1px solid #ccc;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+
+        #setBudgetBtn {
+            position: sticky; /* Fix the button position */
+            top: 0; /* Stick the button to the top of the container */
+            z-index: 1; /* Ensure it stays above the scrollable content */
+            background-color: #ffc107; /* Optional: Add a background color */
+            margin-bottom: 10px;
+            padding: 10px;
+            text-align: center;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
     </style>
     <script type="module" src="homePerDashboard.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
     <nav class="navbar navbar-expand-lg fixed-top">
@@ -222,6 +301,10 @@
             <div class="summary-item">
                 <h5>Total Expense</h5>
                 <span id="totalExpense">$0.00</span>
+            </div>
+            <div class="summary-item">
+                <h5>Total Budget</h5>
+                <span id="totalBudget">$0.00</span>
             </div>
         </div>
     </div>
