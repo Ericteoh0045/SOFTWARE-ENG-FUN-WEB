@@ -86,40 +86,57 @@
 
         window.addEventListener('DOMContentLoaded', () => {
             const form = document.querySelector('form');
+            const nameInput = document.getElementById('name');
+            const genderInput = document.getElementById('gender');
+            const ageInput = document.getElementById('age');
+            const addressInput = document.getElementById('address');
+            const dobInput = document.getElementById('dob');
+            const occupationInput = document.getElementById('occupation');
 
-            onAuthStateChanged(auth, (user) => {
+            onAuthStateChanged(auth, async (user) => {
                 if (user) {
+                    const userDocRef = doc(db, 'users', user.uid);
+                    const userDocSnap = await getDoc(userDocRef);
+
+                    if (userDocSnap.exists()) {
+                        const userDetailsDoc = doc(userDocRef, 'details', 'personal-info');
+                        const userDetailsSnap = await getDoc(userDetailsDoc);
+
+                        if (userDetailsSnap.exists()) {
+                            const data = userDetailsSnap.data();
+                            nameInput.value = data.name || '';
+                            genderInput.value = data.gender || '';
+                            ageInput.value = data.age || '';
+                            addressInput.value = data.address || '';
+                            dobInput.value = data.dob || '';
+                            occupationInput.value = data.occupation || '';
+                        }
+                    }
+
                     form.addEventListener('submit', async (event) => {
                         event.preventDefault();
 
-                        const name = document.getElementById('name').value.trim();
-                        const gender = document.getElementById('gender').value;
-                        const age = parseInt(document.getElementById('age').value, 10);
-                        const address = document.getElementById('address').value.trim();
-                        const dob = document.getElementById('dob').value;
-                        const occupation = document.getElementById('occupation').value.trim();
+                        const name = nameInput.value.trim();
+                        const gender = genderInput.value;
+                        const age = parseInt(ageInput.value, 10);
+                        const address = addressInput.value.trim();
+                        const dob = dobInput.value;
+                        const occupation = occupationInput.value.trim();
 
                         if (name && gender && age && address && dob && occupation) {
                             try {
-                                const userDocRef = doc(db, 'users', user.uid);
-                                const userDocSnap = await getDoc(userDocRef);
+                                const userDetailsCollection = collection(userDocRef, 'details');
 
-                                if (userDocSnap.exists()) {
-                                    const userDetailsCollection = collection(userDocRef, 'details');
+                                await setDoc(doc(userDetailsCollection, 'personal-info'), {
+                                    name,
+                                    gender,
+                                    age,
+                                    address,
+                                    dob,
+                                    occupation
+                                });
 
-                                    await setDoc(doc(userDetailsCollection, 'personal-info'), {
-                                        name,
-                                        gender,
-                                        age,
-                                        address,
-                                        dob,
-                                        occupation
-                                    });
-
-                                    alert('Data saved successfully!');
-                                } else {
-                                    alert('User data not found.');
-                                }
+                                alert('Data saved successfully!');
                             } catch (error) {
                                 console.error('Error saving data:', error);
                                 alert('Failed to save data. Please try again.');
