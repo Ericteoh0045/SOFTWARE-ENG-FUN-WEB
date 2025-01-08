@@ -199,10 +199,6 @@ const initializeAppListeners = () => {
         toggleExpandableContent("Chart Content");
     });
 
-    document.getElementById("budgetBtn").addEventListener("click", () => {
-        toggleExpandableContent("Budget Content");
-    });
-
     document.getElementById("logout").addEventListener("click", () => {
         localStorage.removeItem("incomeData");
         localStorage.removeItem("expenseData");
