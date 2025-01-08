@@ -106,6 +106,86 @@ const handleDelete = (id, type) => {
     }
 };
 
+const handleEdit = (id, type) => {
+    const dataKey = type === "Income" ? "incomeData" : "expenseData";
+    const data = JSON.parse(localStorage.getItem(dataKey)) || [];
+    const entry = data.find(item => item.id === parseInt(id));
+
+    if (entry) {
+        // Define categories
+        const categories = type === "Income"
+            ? ["Salary", "Part-time", "Freelance", "Other"]
+            : ["Food", "Transport", "Entertainment", "Shopping", "Other"];
+
+        // Generate category dropdown options
+        const categoryOptions = categories.map(category =>
+            `<option value="${category}" ${entry.category === category ? "selected" : ""}>${category}</option>`
+        ).join("");
+
+        // Create the edit form HTML
+        const editFormHTML = `
+            <div class="edit-form-container">
+                <h4 class="edit-form-title">Edit ${type} Entry</h4>
+                <div class="edit-form-field">
+                    <label for="editAmount">Amount:</label>
+                    <input type="number" id="editAmount" value="${entry.amount}" />
+                </div>
+                <div class="edit-form-field">
+                    <label for="editCategory">Category:</label>
+                    <select id="editCategory">${categoryOptions}</select>
+                </div>
+                <div class="edit-form-field">
+                    <label for="editRemarks">Remarks:</label>
+                    <input type="text" id="editRemarks" value="${entry.remarks}" />
+                </div>
+                <div class="edit-form-buttons">
+                    <button id="saveEditBtn" data-id="${entry.id}" data-type="${type}" class="save-btn">Save Changes</button>
+                    <button id="cancelEditBtn" class="cancel-btn">Cancel</button>
+                </div>
+            </div>
+        `;
+
+        // Insert the form into the expandable content area
+        const expandableContent = document.getElementById("expandableContent");
+        expandableContent.innerHTML = editFormHTML;
+        expandableContent.classList.add("active");
+
+        // Attach event listeners
+        document.getElementById("saveEditBtn").addEventListener("click", () => saveEdit(entry.id, type));
+        document.getElementById("cancelEditBtn").addEventListener("click", () => {
+            expandableContent.classList.remove("active");
+            expandableContent.innerHTML = "";
+        });
+    }
+};
+
+
+const saveEdit = (id, type) => {
+    const dataKey = type === "Income" ? "incomeData" : "expenseData";
+    const data = JSON.parse(localStorage.getItem(dataKey)) || [];
+
+    // Find the item and update its values
+    const entryIndex = data.findIndex(item => item.id === parseInt(id));
+    if (entryIndex !== -1) {
+        data[entryIndex].amount = parseFloat(document.getElementById("editAmount").value) || 0;
+        data[entryIndex].category = document.getElementById("editCategory").value || "N/A";
+        data[entryIndex].remarks = document.getElementById("editRemarks").value || "N/A";
+
+        // Update localStorage
+        localStorage.setItem(dataKey, JSON.stringify(data));
+
+        // Refresh UI
+        const [year, month] = document.getElementById("monthYearDropdown").value.split("-");
+        fetchMonthlyTotals(parseInt(year, 10), parseInt(month, 10));
+        fetchIncomeExpenseHistory(parseInt(year, 10), parseInt(month, 10));
+
+        // Close the form
+        const expandableContent = document.getElementById("expandableContent");
+        expandableContent.classList.remove("active");
+        expandableContent.innerHTML = "";
+    }
+};
+
 
 // Function to fetch and display history (income & expense) from localStorage
 const fetchIncomeExpenseHistory = (year, month) => {
@@ -164,18 +244,22 @@ const fetchIncomeExpenseHistory = (year, month) => {
         historyItems.forEach(item => {
             historyHTML +=
                 `<div class="history-item">
-                    <div class="history-field">${item.type}</div>
-                    <div class="history-field">${item.date.toLocaleDateString()}</div>
-                    <div class="history-field">$${item.amount.toFixed(2)}</div>
-                    <div class="history-field">${item.category}</div>
-                    <div class="history-field">${item.remarks}</div>
-                    <div class="history-field">
-                        <button class="delete-btn" data-id="${item.id}" data-type="${item.type}">
-                            <i class="fas fa-trash-alt"></i> <!-- Delete icon -->
-                        </button>
-                    </div>
-                </div>`;
+            <div class="history-field">${item.type}</div>
+            <div class="history-field">${item.date.toLocaleDateString()}</div>
+            <div class="history-field">$${item.amount.toFixed(2)}</div>
+            <div class="history-field">${item.category}</div>
+            <div class="history-field">${item.remarks}</div>
+            <div class="history-field">
+                <button class="edit-btn" data-id="${item.id}" data-type="${item.type}">
+                    <i class="fas fa-edit"></i> <!-- Edit icon -->
+                </button>
+                <button class="delete-btn" data-id="${item.id}" data-type="${item.type}">
+                    <i class="fas fa-trash-alt"></i> <!-- Delete icon -->
+                </button>
+            </div>
+        </div>`;
         });
+
     } else {
         historyHTML += `<p>No records found for this month.</p>`;
     }
@@ -196,7 +280,17 @@ function attachDeleteEventListeners() {
             handleDelete(id, type);
         });
     });
+
+    const editButtons = document.querySelectorAll('.edit-btn');
+    editButtons.forEach(button => {
+        button.addEventListener('click', function () {
+            const id = button.getAttribute('data-id');
+            const type = button.getAttribute('data-type');
+            handleEdit(id, type);
+        });
+    });
 }
+
 
 
 // Toggle expandable content for history and other buttons
