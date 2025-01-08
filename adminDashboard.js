@@ -348,31 +348,45 @@ function generateColors(count) {
 }
 
 
+
+//改了这里
 document.addEventListener('DOMContentLoaded', () => {
+    // HTML elements for 'Others' analysis
     const othersAnalysisBtn = document.getElementById('othersAnalysisBtn');
     const othersAnalysisSection = document.getElementById('othersAnalysisSection');
     const othersAnalysisTable = document.getElementById('othersAnalysisTable');
 
+    // Event listener for the "Others Analysis" button
+    // Event listener for the "Others Analysis" button
     othersAnalysisBtn.addEventListener('click', async () => {
         // Toggle visibility of the analysis section
         othersAnalysisSection.classList.toggle('hide');
 
         if (!othersAnalysisSection.classList.contains('hide')) {
-            othersAnalysisTable.innerHTML = '<tr><td colspan="2">Loading...</td></tr>'; // Show loading state
+            othersAnalysisTable.innerHTML = '<tr><td colspan="3">Loading...</td></tr>'; // Show loading state
 
             try {
-                // Query all documents in 'expenses' subcollections across users
-                const querySnapshot = await getDocs(collectionGroup(db, 'expenses'));
                 const othersData = {}; // To store aggregated descriptions and their counts
 
-                querySnapshot.forEach((docSnapshot) => {
+                // Fetch "Others" from Expenses
+                const expenseQuerySnapshot = await getDocs(collectionGroup(db, 'expenses'));
+                expenseQuerySnapshot.forEach((docSnapshot) => {
                     const expense = docSnapshot.data();
-
-                    // Ensure the document has a category and remarks field
-                    // Adjust for typo "Orthers"
                     if (expense.category === 'Others' || expense.category === 'Orthers') {
                         const description = expense.remarks || 'No description provided';
-                        othersData[description] = (othersData[description] || 0) + 1;
+                        othersData[description] = othersData[description] || { expenses: 0, incomes: 0 };
+                        othersData[description].expenses += 1; // Increment count for expenses
+                    }
+                });
+
+                // Fetch "Others" from Incomes
+                const incomeQuerySnapshot = await getDocs(collectionGroup(db, 'incomes'));
+                incomeQuerySnapshot.forEach((docSnapshot) => {
+                    const income = docSnapshot.data();
+                    if (income.category === 'Others' || income.category === 'Orthers') {
+                        const description = income.remarks || 'No description provided';
+                        othersData[description] = othersData[description] || { expenses: 0, incomes: 0 };
+                        othersData[description].incomes += 1; // Increment count for incomes
                     }
                 });
 
@@ -381,22 +395,26 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Build table rows with aggregated data
                 const tableRows = Object.entries(othersData)
                     .map(
-                        ([description, count]) =>
+                        ([description, counts]) =>
                             `<tr>
-                                <td>${description}</td>
-                                <td>${count}</td>
-                            </tr>`
+                            <td>${description}</td>
+                            <td>${counts.expenses}</td>
+                            <td>${counts.incomes}</td>
+                        </tr>`
                     )
                     .join('');
 
                 // Populate table with results or show "No data available"
-                othersAnalysisTable.innerHTML = tableRows || '<tr><td colspan="2">No data available.</td></tr>';
+                othersAnalysisTable.innerHTML =
+                    tableRows || '<tr><td colspan="3">No data available.</td></tr>';
             } catch (error) {
                 console.error('Error fetching "Others" data:', error);
-                othersAnalysisTable.innerHTML = '<tr><td colspan="2">Failed to load data. Please try again.</td></tr>';
+                othersAnalysisTable.innerHTML = '<tr><td colspan="3">Failed to load data. Please try again.</td></tr>';
             }
         }
     });
+
+
 });
 
 
