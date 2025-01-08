@@ -1,6 +1,6 @@
 // Import Firebase modules
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs, updateDoc, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+import { getFirestore, collection, addDoc, getDocs, updateDoc, deleteDoc, doc, collectionGroup, getDoc } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
 
 // Firebase configuration
@@ -29,6 +29,18 @@ const expenseCategoryList = document.getElementById('expenseCategoryList');
 const incomeCategoryInput = document.getElementById('incomeCategoryInput');
 const addIncomeCategoryBtn = document.getElementById('addIncomeCategoryBtn');
 const incomeCategoryList = document.getElementById('incomeCategoryList');
+
+// Elements
+const viewCategoryStatsBtn = document.getElementById('viewCategoryStatsBtn');
+const categoryStatsSection = document.getElementById('categoryStatsSection');
+const expenseChartCanvas = document.getElementById('expenseChart').getContext('2d');
+const incomeChartCanvas = document.getElementById('incomeChart').getContext('2d');
+
+
+// Chart Instances (to avoid recreating)
+let expenseChart;
+let incomeChart;
+
 
 // Sign Out Button
 const logoutBtn = document.getElementById('logout');
@@ -211,6 +223,245 @@ async function deleteIncomeCategory(categoryId) {
         }
     }
 }
+
+// Show Category Statistics Section
+viewCategoryStatsBtn.addEventListener('click', async () => {
+    if (categoryStatsSection.classList.contains('hide')) {
+        categoryStatsSection.classList.remove('hide');
+        await loadCategoryStatistics(); // Load data when the section is displayed
+    } else {
+        categoryStatsSection.classList.add('hide');
+    }
+});
+
+// Fetch and Load Statistics
+async function loadCategoryStatistics() {
+    const expenseData = {};
+    const incomeData = {};
+
+    // Fetch Expense Records from All Users
+    const expenseQuerySnapshot = await getDocs(collection(db, "users"));
+    expenseQuerySnapshot.forEach((userDoc) => {
+        const expensesCollection = collection(db, "users", userDoc.id, "expenses");
+        getDocs(expensesCollection).then((expensesSnapshot) => {
+            expensesSnapshot.forEach((expense) => {
+                const category = expense.data().category;
+                if (category) {
+                    expenseData[category] = (expenseData[category] || 0) + 1;
+                }
+            });
+
+            // Update the chart with new data
+            renderExpenseChart(expenseData);
+        });
+    });
+
+    // Fetch Income Records from All Users
+    const incomeQuerySnapshot = await getDocs(collection(db, "users"));
+    incomeQuerySnapshot.forEach((userDoc) => {
+        const incomesCollection = collection(db, "users", userDoc.id, "incomes");
+        getDocs(incomesCollection).then((incomesSnapshot) => {
+            incomesSnapshot.forEach((income) => {
+                const category = income.data().category;
+                if (category) {
+                    incomeData[category] = (incomeData[category] || 0) + 1;
+                }
+            });
+
+            // Update the chart with new data
+            renderIncomeChart(incomeData);
+        });
+    });
+}
+
+// Render Expense Chart
+function renderExpenseChart(data) {
+    const labels = Object.keys(data);
+    const values = Object.values(data);
+
+    if (expenseChart) {
+        expenseChart.destroy(); // Destroy existing chart to prevent duplication
+    }
+
+    expenseChart = new Chart(expenseChartCanvas, {
+        type: 'pie',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Expense Categories',
+                data: values,
+                backgroundColor: generateColors(labels.length)
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { position: 'top' },
+                tooltip: { enabled: true }
+            }
+        }
+    });
+}
+
+
+// Render Income Chart
+function renderIncomeChart(data) {
+    const labels = Object.keys(data);
+    const values = Object.values(data);
+
+    if (incomeChart) {
+        incomeChart.destroy(); // Destroy existing chart to prevent duplication
+    }
+
+    incomeChart = new Chart(incomeChartCanvas, {
+        type: 'pie',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Income Categories',
+                data: values,
+                backgroundColor: generateColors(labels.length)
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { position: 'top' },
+                tooltip: { enabled: true }
+            }
+        }
+    });
+}
+
+
+// Generate Unique Colors for Categories
+function generateColors(count) {
+    const colors = [];
+    const hueStep = Math.floor(360 / count); // Divide the hue range by the number of categories
+    for (let i = 0; i < count; i++) {
+        const hue = i * hueStep; // Assign a distinct hue for each category
+        const saturation = 70; // Keep saturation fixed for consistency
+        const lightness = 60; // Keep lightness fixed for consistency
+        colors.push(`hsl(${hue}, ${saturation}%, ${lightness}%)`); // Generate color
+    }
+    return colors;
+}
+
+
+document.addEventListener('DOMContentLoaded', () => {
+    const othersAnalysisBtn = document.getElementById('othersAnalysisBtn');
+    const othersAnalysisSection = document.getElementById('othersAnalysisSection');
+    const othersAnalysisTable = document.getElementById('othersAnalysisTable');
+
+    othersAnalysisBtn.addEventListener('click', async () => {
+        // Toggle visibility of the analysis section
+        othersAnalysisSection.classList.toggle('hide');
+
+        if (!othersAnalysisSection.classList.contains('hide')) {
+            othersAnalysisTable.innerHTML = '<tr><td colspan="2">Loading...</td></tr>'; // Show loading state
+
+            try {
+                // Query all documents in 'expenses' subcollections across users
+                const querySnapshot = await getDocs(collectionGroup(db, 'expenses'));
+                const othersData = {}; // To store aggregated descriptions and their counts
+
+                querySnapshot.forEach((docSnapshot) => {
+                    const expense = docSnapshot.data();
+
+                    // Ensure the document has a category and remarks field
+                    // Adjust for typo "Orthers"
+                    if (expense.category === 'Others' || expense.category === 'Orthers') {
+                        const description = expense.remarks || 'No description provided';
+                        othersData[description] = (othersData[description] || 0) + 1;
+                    }
+                });
+
+                console.log('Fetched "Others" Data:', othersData); // Debug the fetched data
+
+                // Build table rows with aggregated data
+                const tableRows = Object.entries(othersData)
+                    .map(
+                        ([description, count]) =>
+                            `<tr>
+                                <td>${description}</td>
+                                <td>${count}</td>
+                            </tr>`
+                    )
+                    .join('');
+
+                // Populate table with results or show "No data available"
+                othersAnalysisTable.innerHTML = tableRows || '<tr><td colspan="2">No data available.</td></tr>';
+            } catch (error) {
+                console.error('Error fetching "Others" data:', error);
+                othersAnalysisTable.innerHTML = '<tr><td colspan="2">Failed to load data. Please try again.</td></tr>';
+            }
+        }
+    });
+});
+
+
+
+
+document.getElementById("viewUserDetailsBtn").addEventListener("click", async () => {
+    const userDetailsSection = document.getElementById("userDetailsSection");
+    const userDetailsTableBody = document.querySelector("#userDetailsTable tbody");
+
+    // Check if the user details section is already visible
+    if (userDetailsSection.style.display === "block") {
+        // Hide the section
+        userDetailsSection.style.display = "none";
+        return; // Exit the function
+    }
+
+    try {
+        // Show the user details section (unhide it)
+        userDetailsSection.style.display = "block";
+
+        // Clear previous user details
+        userDetailsTableBody.innerHTML = "<tr><td colspan='7'>Loading...</td></tr>";
+
+        // Fetch user documents from the "users" collection
+        const usersCollection = collection(db, "users");
+        const usersSnapshot = await getDocs(usersCollection);
+
+        if (!usersSnapshot.empty) {
+            // Fetch details for all users asynchronously
+            const userDetailsPromises = usersSnapshot.docs.map(async (userDoc) => {
+                const userId = userDoc.id;
+                const userData = userDoc.data(); // Get data directly from the root document
+
+                // Fetch additional details (personal-info) if available
+                const userDetailsRef = doc(db, "users", userId, "details", "personal-info");
+                const userDetailsSnap = await getDoc(userDetailsRef);
+
+                const userDetails = userDetailsSnap.exists() ? userDetailsSnap.data() : {};
+
+                return `
+                    <tr>
+                        <td>${userData.email || "N/A"}</td> <!-- Email fetched from root document -->
+                        <td>${userDetails.name || "N/A"}</td>
+                        <td>${userDetails.age || "N/A"}</td>
+                        <td>${userDetails.dob || "N/A"}</td>
+                        <td>${userDetails.gender || "N/A"}</td>
+                        <td>${userDetails.occupation || "N/A"}</td>
+                        <td>${userDetails.address || "N/A"}</td>
+                    </tr>
+                `;
+            });
+
+            // Wait for all user details to be fetched
+            const userDetailsRows = await Promise.all(userDetailsPromises);
+
+            // Populate the table
+            userDetailsTableBody.innerHTML = userDetailsRows.join("") || "<tr><td colspan='7'>No users found.</td></tr>";
+        } else {
+            userDetailsTableBody.innerHTML = "<tr><td colspan='7'>No users found.</td></tr>";
+        }
+    } catch (error) {
+        console.error("Error fetching user details:", error);
+        userDetailsTableBody.innerHTML = `<tr><td colspan='7'>Error fetching user details: ${error.message}</td></tr>`;
+    }
+});
 
 
 // Display categories on page load

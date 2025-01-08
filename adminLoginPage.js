@@ -1,7 +1,7 @@
 // Hardcoded admin credentials
 const adminCredentials = {
-    email: "a@gmail.com", // Replace with your admin email
-    password: "a"        // Replace with your admin password
+    email: "admin@gmail.com",   // admin email
+    password: "admin123"        //admin password
 };
 
 // Get elements from the HTML
