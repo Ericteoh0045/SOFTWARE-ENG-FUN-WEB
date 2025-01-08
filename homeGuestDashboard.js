@@ -293,14 +293,88 @@ function attachDeleteEventListeners() {
 
 
 
-// Toggle expandable content for history and other buttons
+let incomeExpenseChart = null; // Chart reference
+
 function toggleExpandableContent(content) {
     const expandableContent = document.getElementById("expandableContent");
 
-    // Show the content and update its text
+    if (content === "Chart Content") {
+        expandableContent.innerHTML = `
+            <h4>View Total of Income and Expense</h4>
+            <div class="chart-container" style="position: relative; width: 100%; height: 400px;">
+                <canvas id="incomeExpenseChart"></canvas>
+            </div>
+        `;
+        drawChart();  // Call the function to render the chart
+    } else {
+        expandableContent.innerHTML = `<h4>${content}</h4><p>Details and settings related to ${content} can go here.</p>`;
+    }
+
     expandableContent.classList.toggle("active");
-    expandableContent.innerHTML = `<h4>${content}</h4><p>Details and settings related to ${content} can go here.</p>`;
 }
+
+
+const drawChart = () => {
+    const ctx = document.getElementById("incomeExpenseChart").getContext("2d");
+
+    const [year, month] = document.getElementById("monthYearDropdown").value.split("-");
+    const incomeData = JSON.parse(localStorage.getItem("incomeData")) || [];
+    const expenseData = JSON.parse(localStorage.getItem("expenseData")) || [];
+
+    let totalIncome = 0;
+    let totalExpense = 0;
+
+    const startOfMonth = new Date(year, month - 1, 1).getTime();
+    const endOfMonth = new Date(year, month, 0).getTime();
+
+    // Calculate total income for the month
+    incomeData.forEach(item => {
+        if (item.timestamp >= startOfMonth && item.timestamp <= endOfMonth) {
+            totalIncome += parseFloat(item.amount) || 0;
+        }
+    });
+
+    // Calculate total expenses for the month
+    expenseData.forEach(item => {
+        if (item.timestamp >= startOfMonth && item.timestamp <= endOfMonth) {
+            totalExpense += parseFloat(item.amount) || 0;
+        }
+    });
+
+    // Create the chart
+    const chart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: ['Income', 'Expense'],
+            datasets: [{
+                data: [totalIncome, totalExpense],
+                backgroundColor: ['#4CAF50', '#F44336'], // Green for income, red for expense
+                borderColor: ['#388E3C', '#D32F2F'],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true, // Ensure the chart is responsive
+            maintainAspectRatio: false, // Allow resizing
+            plugins: {
+                legend: {
+                    display: false // Hide the legend (remove the "Total" label)
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function (value) {
+                            return '$' + value.toFixed(2); // Format Y-axis with currency
+                        }
+                    }
+                }
+            }
+        }
+    });
+};
+
 
 // Initialize the app with listeners
 const initializeAppListeners = () => {
@@ -341,3 +415,4 @@ const initializeAppListeners = () => {
 // Initialize app
 populateMonthYearDropdown();
 initializeAppListeners();
+
