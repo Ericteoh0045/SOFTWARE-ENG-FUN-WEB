@@ -92,47 +92,58 @@
         });
 
         // Save income details
-            document.getElementById('incomeForm').addEventListener('submit', function (e) {
-                e.preventDefault();
+        document.getElementById('incomeForm').addEventListener('submit', function (e) {
+            e.preventDefault();
 
-                const category = document.getElementById('categoryDropdown').value;
-                let amount = parseFloat(document.getElementById('incomeAmount').value);
-                const remarks = document.getElementById('remarks').value.trim();
-                const incomeDate = document.getElementById('incomeDate').value || new Date().toISOString().split('T')[0];
+            const category = document.getElementById('categoryDropdown').value;
+            let amount = parseFloat(document.getElementById('incomeAmount').value);
+            const remarks = document.getElementById('remarks').value.trim();
+            const incomeDate = document.getElementById('incomeDate').value || new Date().toISOString().split('T')[0];
 
-                if (category && amount > 0 && remarks) {
-                    amount = amount.toFixed(2); // Round to 2 decimal places
+            if (category && amount > 0 && remarks) {
+                amount = amount.toFixed(2); // Round to 2 decimal places
 
-                    // Create the income object
-                    const income = {
-                        id: new Date().getTime(), // Use timestamp as unique ID
-                        category,
-                        amount,
-                        remarks,
-                        date: incomeDate,
-                        timestamp: new Date(incomeDate).getTime() // Save the timestamp for filtering later
-                    };
+                // Create the income object
+                const income = {
+                    id: new Date().getTime(), // Use timestamp as unique ID
+                    category,
+                    amount,
+                    remarks,
+                    date: incomeDate,
+                    timestamp: new Date(incomeDate).getTime() // Save the timestamp for filtering later
+                };
 
-                    // Get existing data from localStorage or initialize an empty array
-                    const incomeData = JSON.parse(localStorage.getItem('incomeData')) || [];
-                    incomeData.push(income);
+                // Get existing data from localStorage or initialize an empty array
+                const incomeData = JSON.parse(localStorage.getItem('incomeData')) || [];
+                incomeData.push(income);
 
-                    // Save the updated data to localStorage
-                    localStorage.setItem('incomeData', JSON.stringify(incomeData));
+                // Save the updated data to localStorage
+                localStorage.setItem('incomeData', JSON.stringify(incomeData));
 
-                    console.log("Income data saved:", incomeData); // Check if the data is saved
+                console.log("Income data saved:", incomeData); // Check if the data is saved
 
-                    // Display success message
-                    const successModal = new bootstrap.Modal(document.getElementById('successModal'));
-                    successModal.show();
+                // Display success message
+                const successModal = new bootstrap.Modal(document.getElementById('successModal'));
+                successModal.show();
 
-                    // Reset the form after successful submission
-                    document.getElementById('incomeForm').reset();
-                } else {
-                    alert('Please fill out all fields with valid values.');
-                }
-            });
-        
+                // Add an event listener to the "Close" button in the modal
+                document.getElementById('closeModalButton').addEventListener('click', () => {
+                    successModal.hide();
+                });
+
+                // Reset the form after successful submission
+                document.getElementById('incomeForm').reset();
+            } else {
+                alert('Please fill out all fields with valid values.');
+            }
+        });
+
+        // Optionally, you can also show saved data when the page loads
+        window.addEventListener('load', () => {
+            const savedData = JSON.parse(localStorage.getItem('incomeData')) || [];
+            console.log("Loaded Income Data:", savedData); // Check the saved data
+        });
+
     </script>
 
     <!-- Bootstrap JS -->
