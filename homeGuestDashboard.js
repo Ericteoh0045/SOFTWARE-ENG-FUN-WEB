@@ -27,6 +27,36 @@ const populateMonthYearDropdown = () => {
     });
 };
 
+// Sample code to add an income entry with a unique id
+const addIncomeEntry = (amount, category, remarks) => {
+    const newEntry = {
+        id: Date.now(), // Use timestamp for a unique id
+        amount,
+        category,
+        remarks,
+        timestamp: new Date().getTime()
+    };
+
+    const incomeData = JSON.parse(localStorage.getItem("incomeData")) || [];
+    incomeData.push(newEntry);
+    localStorage.setItem("incomeData", JSON.stringify(incomeData));
+};
+
+// Similarly, for adding expense entries
+const addExpenseEntry = (amount, category, remarks) => {
+    const newEntry = {
+        id: Date.now(), // Use timestamp for a unique id
+        amount,
+        category,
+        remarks,
+        timestamp: new Date().getTime()
+    };
+
+    const expenseData = JSON.parse(localStorage.getItem("expenseData")) || [];
+    expenseData.push(newEntry);
+    localStorage.setItem("expenseData", JSON.stringify(expenseData));
+};
+
 // Fetch and update monthly totals in real-time (using localStorage)
 const fetchMonthlyTotals = (year, month) => {
     const totalIncomeElement = document.getElementById("totalIncome");
@@ -64,7 +94,10 @@ const handleDelete = (id, type) => {
         const dataKey = type === "Income" ? "incomeData" : "expenseData";
         const data = JSON.parse(localStorage.getItem(dataKey)) || [];
 
-        const updatedData = data.filter(item => item.id !== id);
+        // Filter out the entry with the matching id
+        const updatedData = data.filter(item => item.id !== parseInt(id));
+
+        // Save the updated data back to localStorage
         localStorage.setItem(dataKey, JSON.stringify(updatedData));
 
         const [year, month] = document.getElementById("monthYearDropdown").value.split("-");
@@ -73,9 +106,9 @@ const handleDelete = (id, type) => {
     }
 };
 
+
 // Function to fetch and display history (income & expense) from localStorage
 const fetchIncomeExpenseHistory = (year, month) => {
-
     const expandableContent = document.getElementById("expandableContent");
 
     const startOfMonth = new Date(year, month - 1, 1).getTime();
@@ -89,6 +122,7 @@ const fetchIncomeExpenseHistory = (year, month) => {
         if (item.timestamp >= startOfMonth && item.timestamp <= endOfMonth) {
             historyItems.push({
                 type: "Income",
+                id: item.id, // Include the id
                 date: new Date(item.timestamp),
                 amount: parseFloat(item.amount),
                 category: item.category || "N/A",
@@ -103,6 +137,7 @@ const fetchIncomeExpenseHistory = (year, month) => {
         if (item.timestamp >= startOfMonth && item.timestamp <= endOfMonth) {
             historyItems.push({
                 type: "Expense",
+                id: item.id, // Include the id
                 date: new Date(item.timestamp),
                 amount: parseFloat(item.amount),
                 category: item.category || "N/A",
@@ -162,6 +197,7 @@ function attachDeleteEventListeners() {
         });
     });
 }
+
 
 // Toggle expandable content for history and other buttons
 function toggleExpandableContent(content) {
