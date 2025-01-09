@@ -274,7 +274,8 @@ button:hover {
 
 /* Center the links individually */
 .guest-login,
-.admin-login {
+.admin-login,
+.advisor-login {
     text-align: center;
     /* Center the text */
     margin: 10px 0;
@@ -282,7 +283,8 @@ button:hover {
 }
 
 .guest-login a,
-.admin-login a {
+.admin-login a,
+.advisor-login a {
     text-decoration: none;
     /* Remove underline from links */
     color: rgb(125, 125, 235);
@@ -296,7 +298,8 @@ button:hover {
 }
 
 .guest-login a:hover,
-.admin-login a:hover {
+.admin-login a:hover,
+.advisor-login a:hover {
     color: blue;
     /* Change color on hover */
     text-decoration: underline;

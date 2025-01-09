@@ -1,6 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
-import { getFirestore, collection, query, where, getDocs, deleteDoc, doc, onSnapshot,setDoc } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+import { getFirestore, collection, query, where, getDocs, updateDoc, deleteDoc, doc, onSnapshot,setDoc } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
 
 // Firebase configuration
 const firebaseConfig = {
@@ -224,9 +224,6 @@ const fetchIncomeExpenseHistory = async (year, month, userId) => {
                             <div class="history-field">${item.category}</div>
                             <div class="history-field">${item.remarks}</div>
                             <div class="history-field">
-                                <button class="edit-btn" data-id="${item.id}">
-                                    <i class="fas fa-edit"></i> 
-                                </button>
                                 <button class="delete-btn" data-id="${item.id}" data-type="${item.type}">
                                     <i class="fas fa-trash-alt"></i> <!-- Delete icon -->
                                 </button>
@@ -239,15 +236,6 @@ const fetchIncomeExpenseHistory = async (year, month, userId) => {
                         ${historyHTML}
                     </div>
                 `;
-                
-                // Add event listeners for edit buttons
-                const editButtons = document.querySelectorAll('.edit-btn');
-                editButtons.forEach(button => {
-                    button.addEventListener('click', () => {
-                        const id = button.getAttribute('data-id');
-                        window.location.href = `editHistory.html?id=${id}`; // Navigate to edit page
-                    });
-                });
 
                 // Add event listeners for the delete buttons
                 const deleteButtons = document.querySelectorAll('.delete-btn');

@@ -132,15 +132,20 @@
             text-align: center;
         }
 
-
-
-
         .chart-btn {
             background-color: #28a745;
         }
 
         .budget-btn {
             background-color: #ffc107;
+        }
+
+        .email-btn {
+            background-color: #ff5722;
+        }
+
+        .board-btn {
+            background-color: #673ab7;
         }
 
         /* Expandable content area for the buttons */
@@ -315,11 +320,13 @@
         <button class="expense-btn" id="expensePopupBtn">-</button>
     </div>
 
-    <!-- Square Buttons for History, Chart, and Budget -->
+    <!-- Square Buttons for History, Chart, Budget, Email, and Public Board -->
     <div class="square-buttons">
         <button class="history-btn" id="historyBtn">History</button>
         <button class="chart-btn" id="chartBtn">Chart</button>
         <button class="budget-btn" id="budgetBtn">Budget</button>
+        <button class="email-btn" id="emailBtn" onclick="location.href='mail.html';">Email</button>
+        <button class="board-btn" id="boardBtn" onclick="location.href='Upublic-board.html';">Public Board</button>
     </div>
 
     <!-- Expandable content area for the buttons -->
