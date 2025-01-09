@@ -224,6 +224,9 @@ const fetchIncomeExpenseHistory = async (year, month, userId) => {
                             <div class="history-field">${item.category}</div>
                             <div class="history-field">${item.remarks}</div>
                             <div class="history-field">
+                                <button class="edit-btn" data-id="${item.id}">
+                                    <i class="fas fa-edit"></i>
+                                </button>
                                 <button class="delete-btn" data-id="${item.id}" data-type="${item.type}">
                                     <i class="fas fa-trash-alt"></i> <!-- Delete icon -->
                                 </button>
@@ -236,6 +239,15 @@ const fetchIncomeExpenseHistory = async (year, month, userId) => {
                         ${historyHTML}
                     </div>
                 `;
+                
+                // Add event listeners for edit buttons
+                const editButtons = document.querySelectorAll('.edit-btn');
+                editButtons.forEach(button => {
+                    button.addEventListener('click', () => {
+                        const id = button.getAttribute('data-id');
+                        window.location.href = `editHistory.html?id=${id}`; // Navigate to edit page
+                    });
+                });
 
                 // Add event listeners for the delete buttons
                 const deleteButtons = document.querySelectorAll('.delete-btn');
